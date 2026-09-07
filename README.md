@@ -2,25 +2,19 @@
 
 A small command-line tool that prints `Hello world`.
 
-## Run
+## Install and run
 
 Use a currently supported Node.js release (minimum compatible version: 20).
 
 ```sh
-node bin/safecli.js
+npm install --global github:theclifactory/safecli#v0.1.0
+safecli
 ```
 
 Output:
 
 ```text
 Hello world
-```
-
-To install from a local checkout:
-
-```sh
-npm install --global .
-safecli
 ```
 
 `safecli --help` shows usage. `safecli --version` shows the version.
@@ -32,11 +26,16 @@ access, or shell subprocesses. The default command writes only its greeting;
 
 ## Development
 
+From a source checkout:
+
 ```sh
+node bin/safecli.js
 npm test
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) before committing or releasing.
+You can also install a local checkout with `npm install --global .`.
+See [CONTRIBUTING.md](https://github.com/theclifactory/safecli/blob/main/CONTRIBUTING.md)
+before committing or releasing.
 The package is marked private to prevent accidental npm publication. It can
 still be packed and installed locally. Registry publication requires a separate
 review of the publisher account and namespace ownership.
