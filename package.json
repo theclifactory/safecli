@@ -1,0 +1,22 @@
+{
+  "name": "@theclifactory/safecli",
+  "version": "0.1.0",
+  "description": "A minimal command-line tool that prints Hello world.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "safecli": "bin/safecli.js"
+  },
+  "files": ["bin/safecli.js", "README.md", "LICENSE"],
+  "engines": { "node": ">=20" },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theclifactory/safecli.git"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check:identity": "node scripts/verify-identity.mjs",
+    "prepublishOnly": "node scripts/verify-identity.mjs --push && npm test"
+  }
+}
