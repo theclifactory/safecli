@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,8 +25,8 @@ function fixture(t) {
     git('config', 'safecli.maintainerLogin', 'project-alias');
     writeFileSync(join(cwd, '.git/safecli-private-patterns'), 'private-person@example.invalid\n');
   };
-  const check = () => spawnSync(process.execPath, [script], { cwd, env, encoding: 'utf8' });
-  return { cwd, git, approve, check };
+  const check = (...args) => spawnSync(process.execPath, [script, ...args], { cwd, env, encoding: 'utf8' });
+  return { cwd, env, git, approve, check };
 }
 
 test('identity gate fails closed until configured', t => {
@@ -68,4 +68,25 @@ test('staged content and historical content are both scanned without exposing ma
   const result = f.check();
   assert.equal(result.status, 1);
   assert.doesNotMatch(result.stderr, /private-person@example/);
+});
+
+test('push gate uses project credentials and ignores ambient account overrides', t => {
+  const f = fixture(t); f.approve();
+  const bin = join(f.cwd, 'fake-bin');
+  mkdirSync(bin);
+  writeFileSync(join(bin, 'gh'), `#!/usr/bin/env node
+const expected = process.cwd() + '/.git/safecli-gh';
+const clean = ['GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN', 'GH_HOST'].every(k => !(k in process.env));
+console.log(clean && process.env.GH_CONFIG_DIR === expected ? 'project-alias' : 'wrong-account');
+`, { mode: 0o755 });
+  f.env.PATH = `${bin}:${f.env.PATH}`;
+  f.env.GH_CONFIG_DIR = '/unrelated-account';
+  f.env.GH_TOKEN = 'synthetic-test-token';
+  f.env.GITHUB_TOKEN = 'synthetic-test-token';
+  f.env.GH_HOST = 'example.invalid';
+  assert.equal(f.check('--push').status, 0);
+  writeFileSync(join(bin, 'gh'), '#!/bin/sh\nprintf "%s\\n" wrong-account\n', { mode: 0o755 });
+  const result = f.check('--push');
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /not the approved maintainer/);
 });

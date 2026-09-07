@@ -18,7 +18,16 @@ git config --local safecli.authorName "PUBLIC_AUTHOR_NAME"
 git config --local safecli.authorEmail "EXACT_ACCOUNT_NOREPLY_ADDRESS"
 git config --local safecli.maintainerLogin "GITHUB_ALIAS"
 git config --local core.hooksPath .githooks
+git config --local credential.helper ""
+git config --local --add credential.helper '!env -u GH_TOKEN -u GITHUB_TOKEN -u GH_ENTERPRISE_TOKEN -u GITHUB_ENTERPRISE_TOKEN -u GH_HOST GH_CONFIG_DIR="$(git rev-parse --absolute-git-dir)/safecli-gh" gh auth git-credential'
+./scripts/gh-project.sh auth login --hostname github.com --git-protocol https --web --skip-ssh-key
 ```
+
+Sign in as the dedicated maintainer. Use `./scripts/gh-project.sh` for this
+project's GitHub administration commands. Its configuration stays inside this
+checkout's private Git metadata; credentials use GitHub CLI's normal credential
+storage. The wrapper and push check ignore ambient GitHub tokens and host
+overrides. Other projects retain their existing GitHub CLI configuration.
 
 Place one private identifying string per line in the file returned by:
 
@@ -31,8 +40,8 @@ do not print the identifying strings or mismatched names/emails.
 
 The pre-commit hook verifies effective author/committer identities, the staged
 files, and all locally reachable history. The pre-push hook also checks that the
-active GitHub CLI account matches the expected maintainer. Use GitHub CLI's
-credential helper for this HTTPS remote; a different authentication mechanism
+project's isolated GitHub CLI account matches the expected maintainer. Use the
+credential helper above for this HTTPS remote; a different authentication mechanism
 must be reviewed separately. Hooks run locally and can be bypassed. They are a
 guardrail, not proof that the server, other clones, public actions, or binary
 metadata are free of identity links.

@@ -59,9 +59,11 @@ try {
   }
   if (process.argv.includes('--push')) {
     let active;
-    try { active = execFileSync('gh', ['api', 'user', '--jq', '.login'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim(); }
+    const githubEnv = { ...process.env, GH_CONFIG_DIR: `${git('rev-parse', '--absolute-git-dir')}/safecli-gh` };
+    for (const key of ['GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN', 'GH_HOST']) delete githubEnv[key];
+    try { active = execFileSync('gh', ['api', 'user', '--jq', '.login'], { encoding: 'utf8', env: githubEnv, stdio: ['ignore', 'pipe', 'pipe'] }).trim(); }
     catch { fail('Cannot verify the GitHub CLI account. Sign in as the dedicated maintainer.'); }
-    if (active.toLowerCase() !== login.toLowerCase()) fail('The active GitHub CLI account is not the approved maintainer.');
+    if (active.toLowerCase() !== login.toLowerCase()) fail('The project GitHub CLI account is not the approved maintainer.');
   }
   process.stdout.write('Identity checks passed for this checkout.\n');
 } catch (error) {
